@@ -68,7 +68,7 @@ def retrieve_useful_data(json_data):
     for cve in cves_list:
         cve = cve['cve']
         vulnStatus = cve['vulnStatus']
-        if vulnStatus == 'Rejected':
+        if vulnStatus in ('Rejected', 'Deferred', 'Undergoing Analysis', 'Awaiting Analysis', 'Received'):
             # include rejected just for reference, but skip the data extraction
             cve_record = {'id': cve['id'], 'vulnStatus': vulnStatus}
         else:
@@ -136,7 +136,11 @@ def metrics_from_json(cve, return_cve=False):
     metrics = cve['metrics']
     keys = list(metrics.keys())
     keys.sort(reverse=True)
-    version = keys[0] # the highest ranking version is default
+    try:
+        version = keys[0] # the highest ranking version is default
+    except IndexError:
+        print(cve)
+        raise IndexError
     if version == 'cvssMetricV2':
         metrics_data = v2metrics(cve=cve)
     elif version in ('cvssMetricV30', 'cvssMetricV31'):
