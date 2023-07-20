@@ -30,10 +30,10 @@ def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
             print("{}. Successful query - duration: {}".format(counter, dt.datetime.now()-startTime))
             json_data = response.json()
             expected_results_num = min(resultsPerPage, min(stop_index-current_index, resultsPerPage))
-            n = len(json_data["vulnerabilities"])
+            n = len(json_data["vulnerabilities"]) # number of CVEs processed
             print("{}. Number of records retrieved: {} and expected: {}".format(counter, n, expected_results_num))
             data = retrieve_useful_data(json_data)
-            write_to_csv(data, startIndex=current_index, resultsPerPage=resultsPerPage)
+            write_to_csv(data, startIndex=current_index, resultsPerPage=min(n, resultsPerPage))
             # update counters/status_code
             current_index += resultsPerPage # default 2000
             counter += 1
@@ -53,7 +53,7 @@ def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
 def write_to_csv(data, startIndex, resultsPerPage):
     index = pd.Index(range(startIndex, startIndex+resultsPerPage))
     df = pd.DataFrame(data, index=index)
-    output_path = "nvd_cve_metrics.txt"
+    output_path = "data/nvd_cve_metrics.txt"
     df.to_csv(output_path, sep="|", mode='a+', header=not os.path.exists(output_path))
     print("successfully appended data to text file")
     return True
@@ -61,5 +61,4 @@ def write_to_csv(data, startIndex, resultsPerPage):
 
 
 if __name__ == "__main__":
-    #nvd_queries(start_index=100, stop_index=222, resultsPerPage=10)
-    nvd_queries(start_index=0, stop_index=5500)
+    nvd_queries(start_index=220000)
