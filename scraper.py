@@ -136,6 +136,35 @@ def metrics_from_json(cve, return_cve=False):
     metrics = cve['metrics']
     keys = list(metrics.keys())
     keys.sort(reverse=True)
+    version = keys[0] # the highest ranking version is default
+    if version == 'cvssMetricV2':
+        metrics_data = v2metrics(cve=cve)
+    elif version == 'cvssMetricV31':
+        metrics_data = v31metrics(cve)
+    else:
+        print(cve)
+        raise ValueError("I don't know what version={} is .... needs to be reviewed!!".format(version))
+    return metrics_data
+    
+
+
+def v2metrics(cve, return_cve=False):
+    """
+    cve: JSON or dict object
+
+    Notes on Metrics
+    metrics can contain multiple keys (and dictionaries)
+    For example, (https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-41172),
+        contains "cvssMetricV2" and "cvssMetricV31". In this scenario, I think the best 
+        decision would be to take version 3.1 and ignore V2.0. 
+
+    However, cvssMetricV31 also contains multiple sub-metrics. 
+        "cvssMetricV31": [{...type: Primary}, {...type: Secondary}, ...]
+    In this scenario, we would prioritize the Primary type and ignore secondary. 
+    """
+    metrics = cve['metrics']
+    keys = list(metrics.keys())
+    keys.sort(reverse=True)
     try:
         version = keys[0] # the highest ranking version is default
         baseScore = metrics[version][0]['cvssData']['baseScore']
@@ -153,10 +182,46 @@ def metrics_from_json(cve, return_cve=False):
         if return_cve:
             return metrics_data, cve
         return metrics_data
-    except IndexError:
+    except (IndexError, KeyError) as e:
         print(cve)
-        raise IndexError
+        raise e
 
+
+
+def v31metrics(cve, return_cve=False):
+    """
+    cve: JSON or dict object
+
+    Notes on Metrics
+    metrics can contain multiple keys (and dictionaries)
+    For example, (https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-41172),
+        contains "cvssMetricV2" and "cvssMetricV31". In this scenario, I think the best 
+        decision would be to take version 3.1 and ignore V2.0. 
+
+    However, cvssMetricV31 also contains multiple sub-metrics. 
+        "cvssMetricV31": [{...type: Primary}, {...type: Secondary}, ...]
+    In this scenario, we would prioritize the Primary type and ignore secondary. 
+    """
+    metrics = cve['metrics']
+    keys = list(metrics.keys())
+    keys.sort(reverse=True)
+    try:
+        version = keys[0] # the highest ranking version is default
+        baseScore = metrics[version][0]['cvssData']['baseScore']
+        baseSeverity = metrics[version][0]['cvssData']['baseSeverity']
+        attackVector = metrics[version][0]['cvssData']['attackVector']
+        exploitabilityScore = metrics[version][0]['exploitabilityScore']
+        impactScore = metrics[version][0]['exploitabilityScore']
+        metrics_data = {'version': version, 'all_versions': keys, 
+                        'baseScore': baseScore, 'baseSeverity': baseSeverity, 
+                        'attacVector': attackVector, 'exploitabilityScore': exploitabilityScore,
+                        'impactScore': impactScore}
+        if return_cve:
+            return metrics_data, cve
+        return metrics_data
+    except (IndexError, KeyError) as e:
+        print(cve)
+        raise e
 
 
 
