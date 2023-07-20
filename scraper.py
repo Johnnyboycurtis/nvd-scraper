@@ -139,11 +139,12 @@ def metrics_from_json(cve, return_cve=False):
     version = keys[0] # the highest ranking version is default
     if version == 'cvssMetricV2':
         metrics_data = v2metrics(cve=cve)
-    elif version == 'cvssMetricV31':
+    elif version in ('cvssMetricV30', 'cvssMetricV31'):
         metrics_data = v31metrics(cve)
     else:
         print(cve)
-        raise ValueError("I don't know what version={} is .... needs to be reviewed!!".format(version))
+        print("I don't know what version={} is .... needs to be reviewed!!".format(version))
+        raise ValueError
     return metrics_data
     
 
