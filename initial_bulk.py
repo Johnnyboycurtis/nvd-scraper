@@ -16,7 +16,7 @@ import random
 def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
     if stop_index is None:
         response = v2_api_requests(start_index=0, resultsPerPage=10) # query just to get the updated max results available
-        stop_index = response.json['totalResults']
+        stop_index = response.json()['totalResults']
     current_index = start_index # NVD uses 0 as starting index FYI
     print("startIndex={} - endIndex={} - resultsPerPage={}".format(start_index, stop_index, resultsPerPage))
     startTime = dt.datetime.now()
@@ -61,4 +61,5 @@ def write_to_csv(data, startIndex, resultsPerPage):
 
 
 if __name__ == "__main__":
-    nvd_queries(start_index=100, stop_index=222, resultsPerPage=10)
+    #nvd_queries(start_index=100, stop_index=222, resultsPerPage=10)
+    nvd_queries(start_index=0, stop_index=5500)
