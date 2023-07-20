@@ -62,15 +62,23 @@ def query_new_index(max_index=100, start_index=0):
 
 def retrieve_useful_data(response):
     data = response.json()
-    cves = data['vulnerabilities']
+    cves_list = data['vulnerabilities']
     # need id, publishdate, base score, attac vector, exploit score, base severity, description, (optional other vendor articles), cveid
-    for cve in cves:
+    for cve in cves_list:
         id = cve['id']
         publishedDate = cve['published']
         lastModified = cve['lastModified']
         vulnStatus = cve['vulnStatus']
         description = description_from_json(cve)
-
+        metrics_data = metrics_from_json(cve)
+        references_url_list = references_from_json(cve)
+    metrics_data['id'] = id
+    metrics_data['publishedDate'] = publishedDate
+    metrics_data['lastModified'] = lastModified
+    metrics_data['vulnStatus'] = vulnStatus
+    metrics_data['description'] = description
+    metrics_data['references_url_list'] = references_url_list # contains useful articles that can also be scraped
+    return metrics_data
 
 
 def description_from_json(cve):
@@ -82,7 +90,47 @@ def description_from_json(cve):
     return str(description_list)
 
 
-def metrics_from_json()
+def references_from_json(cve):
+    references_list = cve['references']
+    url_list = []
+    for item in references_list:
+        url_list.append(item['url'])
+    return url_list
+
+
+
+
+def metrics_from_json(cve, return_cve=False):
+    """
+    cve: JSON or dict object
+
+    Notes on Metrics
+    metrics can contain multiple keys (and dictionaries)
+    For example, (https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=CVE-2021-41172),
+        contains "cvssMetricV2" and "cvssMetricV31". In this scenario, I think the best 
+        decision would be to take version 3.1 and ignore V2.0. 
+
+    However, cvssMetricV31 also contains multiple sub-metrics. 
+        "cvssMetricV31": [{...type: Primary}, {...type: Secondary}, ...]
+    In this scenario, we would prioritize the Primary type and ignore secondary. 
+    """
+    metrics = cve['metrics']
+    keys = list(metrics.keys())
+    keys.sort(reverse=True)
+    version = keys[0] # the highest ranking version is default
+    baseScore = metrics[version][0]['cvssData']['baseScore']
+    baseSeverity = metrics[version][0]['cvssData']['baseSeverity']
+    attackVector = metrics[version][0]['cvssData']['attackVector']
+    exploitabilityScore = metrics[version][0]['exploitabilityScore']
+    impactScore = metrics[version][0]['exploitabilityScore']
+    metrics_data = {'version': version, 'all_versions': keys, 
+                    'baseScore': baseScore, 'baseSeverity': baseSeverity, 
+                    'attacVector': attackVector, 'exploitabilityScore': exploitabilityScore,
+                    'impactScore': impactScore}
+    if return_cve:
+        return metrics_data, cve
+    return metrics_data
+
 
 
 
