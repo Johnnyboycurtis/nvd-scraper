@@ -134,7 +134,7 @@ def metrics_from_json(cve, return_cve=False):
 
 
 
-def main():
+def simple_api_call():
     with open("sample-v2.json", "w+") as myfile:
         response = v2_api_requests(start_index=0, resultsPerPage=10) # returns string JSON-format 
         #response = v1_api_request()
