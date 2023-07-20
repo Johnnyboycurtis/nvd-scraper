@@ -70,7 +70,9 @@ def retrieve_useful_data(json_data):
         vulnStatus = cve['vulnStatus']
         if vulnStatus in ('Rejected', 'Deferred', 'Undergoing Analysis', 'Awaiting Analysis', 'Received'):
             # include rejected just for reference, but skip the data extraction
-            cve_record = {'id': cve['id'], 'vulnStatus': vulnStatus}
+            description = description_from_json(cve)
+            publishedDate = cve['published']
+            cve_record = {'id': cve['id'], 'vulnStatus': vulnStatus, 'description': description, 'publishedDate': publishedDate}
         else:
             cve_record = extract_cve_data(cve)
         records.append(cve_record)
@@ -242,7 +244,7 @@ def simple_api_call():
 
 
 if __name__ == "__main__":
-    main()
+    pass
 
 
 
