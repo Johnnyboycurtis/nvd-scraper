@@ -9,6 +9,7 @@ from requests.auth import HTTPBasicAuth
 from nvd_secrets import get_secrets
 import json
 from tqdm import tqdm
+import datetime as dt
 
 def v2_api_requests(start_index=None, cve_id = None, resultsPerPage=2000):
     """
@@ -72,9 +73,10 @@ def retrieve_useful_data(json_data):
             # include rejected just for reference, but skip the data extraction
             description = description_from_json(cve)
             publishedDate = cve['published']
-            cve_record = {'id': cve['id'], 'vulnStatus': vulnStatus, 'description': description, 'publishedDate': publishedDate}
+            cve_record = {'id': cve['id'], 'vulnStatus': vulnStatus, 'description': description, 'publishedDate': publishedDate, 'dateDownloaded': str(dt.datetime.now())}
         else:
             cve_record = extract_cve_data(cve)
+            cve_record['dateDownloaded'] = str(dt.datetime.now())
         records.append(cve_record)
     return records
 
