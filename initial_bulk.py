@@ -61,4 +61,4 @@ def write_to_csv(data, startIndex, resultsPerPage):
 
 
 if __name__ == "__main__":
-    nvd_queries(start_index=220000)
+    nvd_queries(start_index=0)
