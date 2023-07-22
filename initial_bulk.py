@@ -39,7 +39,7 @@ def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
             counter += 1
             status_code = None 
             time.sleep(2)
-        if response.status_code in range(500, 600):
+        if response.status_code in range(400, 600):
             t = random.randint(30, 40)
             print("{}. sleeping for {} seconds....".format(counter, t))
             time.sleep(t)
@@ -62,7 +62,7 @@ def write_to_csv(data, startIndex, resultsPerPage):
             df[c] = ''
     df = df[cols]
     output_path = "data/nvd_cve_metrics.txt"
-    df.to_csv(output_path, sep="|", mode='a+', header=not os.path.exists(output_path))
+    df.to_csv(output_path, sep="|", mode='a+', header=not os.path.exists(output_path), index_label='cve_index')
     print("successfully appended data to text file")
     return True
 
