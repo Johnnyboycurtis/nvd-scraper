@@ -51,8 +51,16 @@ def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
 
 
 def write_to_csv(data, startIndex, resultsPerPage):
+    cols = ['id', 'version', 'all_versions', 'baseScore', 'baseSeverity',
+        'attacVector', 'exploitabilityScore', 'impactScore', 
+        'publishedDate', 'lastModified', 'vulnStatus', 'description',
+        'references_url_list', 'dateDownloaded']
     index = pd.Index(range(startIndex, startIndex+resultsPerPage))
     df = pd.DataFrame(data, index=index)
+    for c in cols:
+        if c not in df.columns:
+            df[c] = ''
+    df = df[cols]
     output_path = "data/nvd_cve_metrics.txt"
     df.to_csv(output_path, sep="|", mode='a+', header=not os.path.exists(output_path))
     print("successfully appended data to text file")
