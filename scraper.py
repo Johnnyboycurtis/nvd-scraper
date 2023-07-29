@@ -11,7 +11,7 @@ import json
 from tqdm import tqdm
 import datetime as dt
 
-def v2_api_requests(start_index=None, cve_id = None, resultsPerPage=2000):
+def v2_api_requests(session, start_index=None, cve_id = None, resultsPerPage=2000):
     """
     Call NVD V2 API
     Use `start_index` for bulk scheduled pulls
@@ -22,10 +22,7 @@ def v2_api_requests(start_index=None, cve_id = None, resultsPerPage=2000):
     url = "https://services.nvd.nist.gov/rest/json/cves/2.0/?resultsPerPage={}&startIndex={}".format(resultsPerPage, start_index) # CVE API -- set to 20 for testing
     if cve_id:
         url = "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={}".format(cve_id)
-    secrets = get_secrets()
-    auth = HTTPBasicAuth('apikey', secrets['apikey'])
-    session = requests.Session()
-    response = session.get(url=url, auth=auth)
+    response = session.get(url=url)
     session.close()
     return response
 
