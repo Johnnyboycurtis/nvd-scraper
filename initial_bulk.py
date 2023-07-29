@@ -10,39 +10,50 @@ import time
 import datetime as dt
 import os
 import random
+import requests
+from requests.auth import HTTPBasicAuth
+from nvd_secrets import get_secrets
 
+
+headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"}
 
 
 def nvd_queries(start_index, stop_index=None, resultsPerPage=2000):
     if stop_index is None:
-        response = v2_api_requests(start_index=0, resultsPerPage=10) # query just to get the updated max results available
+        with requests.Session() as session:
+            response = v2_api_requests(start_index=0, resultsPerPage=10, session=session) # query just to get the updated max results available
         stop_index = response.json()['totalResults']
     current_index = start_index # NVD uses 0 as starting index FYI
     print("startIndex={} - endIndex={} - resultsPerPage={}".format(start_index, stop_index, resultsPerPage))
     startTime = dt.datetime.now()
     counter = 1
     status_code = None
-    while (current_index < stop_index):
-        print("{}. Attempting to query currentIndex={} - endIndex={} - statusCode={}".format(counter, current_index, min(stop_index, current_index+resultsPerPage-1), status_code))
-        response = v2_api_requests(start_index=current_index, resultsPerPage=resultsPerPage)
-        status_code = response.status_code
-        if response.status_code in range(200, 300):
-            print("{}. Successful query - duration: {}".format(counter, dt.datetime.now()-startTime))
-            json_data = response.json()
-            expected_results_num = min(resultsPerPage, min(stop_index-current_index, resultsPerPage))
-            n = len(json_data["vulnerabilities"]) # number of CVEs processed
-            print("{}. Number of records retrieved: {} and expected: {}".format(counter, n, expected_results_num))
-            data = retrieve_useful_data(json_data)
-            write_to_csv(data, startIndex=current_index, resultsPerPage=min(n, resultsPerPage))
-            # update counters/status_code
-            current_index += resultsPerPage # default 2000
-            counter += 1
-            status_code = None 
-            time.sleep(2)
-        if response.status_code in range(400, 600):
-            t = random.randint(30, 40)
-            print("{}. sleeping for {} seconds....".format(counter, t))
-            time.sleep(t)
+    with requests.Session() as session:
+        session.headers = headers
+        secrets = get_secrets()
+        auth = HTTPBasicAuth('apikey', secrets['apikey'])
+        session.auth = auth
+        while (current_index < stop_index):
+            print("{}. Attempting to query currentIndex={} - endIndex={} - statusCode={}".format(counter, current_index, min(stop_index, current_index+resultsPerPage-1), status_code))
+            response = v2_api_requests(start_index=current_index, resultsPerPage=resultsPerPage, session=session)
+            status_code = response.status_code
+            if response.status_code in range(200, 300):
+                print("{}. Successful query - duration: {}".format(counter, dt.datetime.now()-startTime))
+                json_data = response.json()
+                expected_results_num = min(resultsPerPage, min(stop_index-current_index, resultsPerPage))
+                n = len(json_data["vulnerabilities"]) # number of CVEs processed
+                print("{}. Number of records retrieved: {} and expected: {}".format(counter, n, expected_results_num))
+                data = retrieve_useful_data(json_data)
+                write_to_csv(data, startIndex=current_index, resultsPerPage=min(n, resultsPerPage))
+                # update counters/status_code
+                current_index += resultsPerPage # default 2000
+                counter += 1
+                status_code = None 
+                time.sleep(2)
+            if response.status_code in range(400, 600):
+                t = random.randint(30, 40)
+                print("{}. sleeping for {} seconds....".format(counter, t))
+                time.sleep(t)
     endTime = dt.datetime.now()
     print("Total duration: {}".format(endTime - startTime))
     print("Success :)")
